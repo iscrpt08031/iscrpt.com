@@ -1,0 +1,1384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>iScrpt — Automation for Arizona Small Businesses</title>
+  <meta name="description" content="iScrpt builds Apple Shortcuts and AI automations that save Arizona small businesses hours every week. Join the waitlist." />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #080810;
+      --surface: #0f0f1a;
+      --card: #14141f;
+      --border: #1e1e2e;
+      --accent1: #6366f1;
+      --accent2: #06b6d4;
+      --accent3: #a78bfa;
+      --text: #f4f4f5;
+      --muted: #71717a;
+      --subtle: #3f3f52;
+      --success: #22c55e;
+      --radius: 14px;
+      --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", system-ui, sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ─── Noise texture overlay ─── */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.4;
+    }
+
+    /* ─── Ambient glow ─── */
+    .glow-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(120px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ─── Navigation ─── */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 5%;
+      background: rgba(8, 8, 16, 0.7);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+
+    .nav-logo {
+      font-size: 1.4rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      background: linear-gradient(135deg, #fff 30%, var(--accent3));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .nav-logo span { color: var(--accent1); -webkit-text-fill-color: var(--accent1); }
+
+    .nav-cta {
+      background: linear-gradient(135deg, var(--accent1), var(--accent2));
+      color: #fff;
+      border: none;
+      padding: 10px 22px;
+      border-radius: 50px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.2s;
+      letter-spacing: 0.01em;
+    }
+
+    .nav-cta:hover { opacity: 0.88; transform: translateY(-1px); }
+
+    /* ─── Hero ─── */
+    #hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 120px 5% 80px;
+      overflow: hidden;
+    }
+
+    #hero .glow-orb:nth-child(1) {
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(99,102,241,0.18), transparent 70%);
+      top: -100px; left: -100px;
+    }
+    #hero .glow-orb:nth-child(2) {
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(6,182,212,0.14), transparent 70%);
+      bottom: -80px; right: -80px;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: rgba(99,102,241,0.12);
+      border: 1px solid rgba(99,102,241,0.3);
+      padding: 7px 16px;
+      border-radius: 50px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--accent3);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 28px;
+      animation: fadeUp 0.7s ease both;
+    }
+
+    .hero-badge .dot {
+      width: 6px; height: 6px;
+      background: var(--accent2);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.4); }
+    }
+
+    h1 {
+      font-size: clamp(2.6rem, 7vw, 5.2rem);
+      font-weight: 800;
+      line-height: 1.08;
+      letter-spacing: -0.04em;
+      margin-bottom: 24px;
+      animation: fadeUp 0.7s 0.1s ease both;
+    }
+
+    h1 .gradient-text {
+      background: linear-gradient(135deg, var(--accent1) 0%, var(--accent2) 50%, var(--accent3) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-sub {
+      font-size: clamp(1rem, 2.2vw, 1.22rem);
+      color: var(--muted);
+      max-width: 540px;
+      margin: 0 auto 42px;
+      line-height: 1.7;
+      animation: fadeUp 0.7s 0.2s ease both;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      animation: fadeUp 0.7s 0.3s ease both;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: linear-gradient(135deg, var(--accent1), var(--accent2));
+      color: #fff;
+      border: none;
+      padding: 16px 38px;
+      border-radius: 50px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 0 40px rgba(99,102,241,0.35);
+      letter-spacing: -0.01em;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 60px rgba(99,102,241,0.5);
+    }
+
+    .btn-primary svg { width: 18px; height: 18px; }
+
+    .hero-note {
+      font-size: 0.82rem;
+      color: var(--subtle);
+    }
+
+    .hero-scroll-indicator {
+      position: absolute;
+      bottom: 36px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      color: var(--subtle);
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      animation: fadeIn 1s 1s ease both;
+    }
+
+    .scroll-line {
+      width: 1px;
+      height: 36px;
+      background: linear-gradient(to bottom, var(--accent1), transparent);
+      animation: scrollPulse 2s infinite;
+    }
+
+    @keyframes scrollPulse {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 1; }
+    }
+
+    /* ─── Section shared ─── */
+    section { position: relative; }
+
+    .section-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 100px 5%;
+    }
+
+    .section-label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent2);
+      margin-bottom: 14px;
+    }
+
+    .section-title {
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+      margin-bottom: 18px;
+    }
+
+    .section-sub {
+      font-size: 1.05rem;
+      color: var(--muted);
+      max-width: 560px;
+      line-height: 1.7;
+    }
+
+    /* ─── Services ─── */
+    #services { background: var(--surface); }
+
+    #services::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border), transparent);
+    }
+
+    .services-header {
+      text-align: center;
+      margin-bottom: 64px;
+    }
+
+    .services-header .section-sub {
+      margin: 0 auto;
+    }
+
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 24px;
+    }
+
+    .service-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 40px 36px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.3s, transform 0.3s;
+    }
+
+    .service-card::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+    }
+
+    .service-card:nth-child(1)::before {
+      background: linear-gradient(90deg, var(--accent1), var(--accent3));
+    }
+
+    .service-card:nth-child(2)::before {
+      background: linear-gradient(90deg, var(--accent2), var(--accent1));
+    }
+
+    .service-card:hover {
+      border-color: var(--subtle);
+      transform: translateY(-4px);
+    }
+
+    .service-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.6rem;
+      margin-bottom: 24px;
+    }
+
+    .service-card:nth-child(1) .service-icon {
+      background: rgba(99,102,241,0.15);
+    }
+
+    .service-card:nth-child(2) .service-icon {
+      background: rgba(6,182,212,0.15);
+    }
+
+    .service-card h3 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 12px;
+    }
+
+    .service-card p {
+      color: var(--muted);
+      font-size: 0.95rem;
+      line-height: 1.7;
+      margin-bottom: 28px;
+    }
+
+    .service-features {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .service-features li {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.9rem;
+      color: #a1a1b0;
+    }
+
+    .service-features li::before {
+      content: "✓";
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+
+    .service-card:nth-child(1) .service-features li::before {
+      background: rgba(99,102,241,0.2);
+      color: var(--accent3);
+    }
+
+    .service-card:nth-child(2) .service-features li::before {
+      background: rgba(6,182,212,0.2);
+      color: var(--accent2);
+    }
+
+    /* ─── Who We Serve ─── */
+    #who {
+      background: var(--bg);
+    }
+
+    #who::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border), transparent);
+    }
+
+    .who-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      align-items: center;
+    }
+
+    @media (max-width: 768px) {
+      .who-layout { grid-template-columns: 1fr; gap: 48px; }
+    }
+
+    .industry-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 32px;
+    }
+
+    .pill {
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 8px 16px;
+      border-radius: 50px;
+      font-size: 0.85rem;
+      color: #a1a1b0;
+      transition: border-color 0.2s, color 0.2s;
+    }
+
+    .pill:hover {
+      border-color: var(--accent1);
+      color: var(--accent3);
+    }
+
+    .az-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(99,102,241,0.1);
+      border: 1px solid rgba(99,102,241,0.25);
+      padding: 12px 20px;
+      border-radius: 12px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: var(--accent3);
+      margin-bottom: 32px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      text-align: center;
+    }
+
+    .stat-number {
+      font-size: 2rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      background: linear-gradient(135deg, var(--accent1), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .stat-label {
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-top: 4px;
+      line-height: 1.4;
+    }
+
+    /* ─── How It Works ─── */
+    #how { background: var(--surface); }
+
+    #how::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border), transparent);
+    }
+
+    .how-header {
+      text-align: center;
+      margin-bottom: 64px;
+    }
+
+    .how-header .section-sub { margin: 0 auto; }
+
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 24px;
+    }
+
+    .step-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px 28px;
+      text-align: center;
+      position: relative;
+      transition: border-color 0.3s;
+    }
+
+    .step-card:hover { border-color: var(--subtle); }
+
+    .step-number {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: var(--accent2);
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    .step-icon {
+      font-size: 2rem;
+      margin-bottom: 16px;
+    }
+
+    .step-card h4 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+      letter-spacing: -0.01em;
+    }
+
+    .step-card p {
+      font-size: 0.88rem;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    /* ─── CTA Banner ─── */
+    #cta {
+      background: var(--bg);
+    }
+
+    #cta::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border), transparent);
+    }
+
+    .cta-box {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 72px 5%;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cta-box .glow-orb {
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, rgba(99,102,241,0.12), transparent 70%);
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    .cta-box .section-title { margin-bottom: 16px; }
+    .cta-box .section-sub { margin: 0 auto 40px; }
+
+    /* ─── Footer ─── */
+    footer {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 48px 5%;
+    }
+
+    .footer-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      text-align: center;
+    }
+
+    .footer-logo {
+      font-size: 1.3rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      background: linear-gradient(135deg, #fff 30%, var(--accent3));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .footer-tagline {
+      font-size: 0.88rem;
+      color: var(--muted);
+    }
+
+    .footer-location {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.82rem;
+      color: var(--subtle);
+    }
+
+    .footer-copy {
+      font-size: 0.78rem;
+      color: var(--subtle);
+      margin-top: 8px;
+    }
+
+    /* ─── Waitlist Modal / Form Page ─── */
+    #form-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      overflow-y: auto;
+      padding: 40px 16px 60px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.35s ease;
+    }
+
+    #form-overlay.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    #form-overlay::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background: rgba(5, 5, 12, 0.92);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      z-index: -1;
+    }
+
+    .form-panel {
+      width: 100%;
+      max-width: 620px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 48px 44px;
+      position: relative;
+      transform: translateY(30px);
+      transition: transform 0.35s ease;
+    }
+
+    #form-overlay.open .form-panel {
+      transform: translateY(0);
+    }
+
+    .form-close {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      width: 36px;
+      height: 36px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+      transition: color 0.2s, border-color 0.2s;
+      font-size: 1rem;
+    }
+
+    .form-close:hover { color: var(--text); border-color: var(--subtle); }
+
+    .form-panel .section-label { margin-bottom: 8px; }
+
+    .form-panel h2 {
+      font-size: 1.7rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 8px;
+    }
+
+    .form-panel .form-intro {
+      font-size: 0.93rem;
+      color: var(--muted);
+      margin-bottom: 36px;
+      line-height: 1.6;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    @media (max-width: 520px) {
+      .form-row { grid-template-columns: 1fr; }
+      .form-panel { padding: 36px 24px; }
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 18px;
+    }
+
+    .form-group label {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #a1a1b0;
+      letter-spacing: 0.02em;
+    }
+
+    .form-group label .req {
+      color: var(--accent1);
+      margin-left: 2px;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 16px;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 0.95rem;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      -webkit-appearance: none;
+      outline: none;
+    }
+
+    .form-group input::placeholder,
+    .form-group textarea::placeholder {
+      color: var(--subtle);
+    }
+
+    .form-group select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2371717a' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      padding-right: 38px;
+    }
+
+    .form-group select option {
+      background: var(--card);
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      border-color: var(--accent1);
+      box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
+    }
+
+    .checkbox-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .checkbox-group .group-label {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #a1a1b0;
+      letter-spacing: 0.02em;
+      margin-bottom: 2px;
+    }
+
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+    }
+
+    .checkbox-item input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--accent1);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .checkbox-item span {
+      font-size: 0.9rem;
+      color: #a1a1b0;
+    }
+
+    .form-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 10px 0 24px;
+    }
+
+    .btn-submit {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, var(--accent1), var(--accent2));
+      color: #fff;
+      border: none;
+      border-radius: 50px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.2s;
+      box-shadow: 0 0 40px rgba(99,102,241,0.3);
+      margin-top: 8px;
+      letter-spacing: -0.01em;
+    }
+
+    .btn-submit:hover { opacity: 0.88; transform: translateY(-1px); }
+
+    .form-privacy {
+      text-align: center;
+      font-size: 0.78rem;
+      color: var(--subtle);
+      margin-top: 14px;
+    }
+
+    /* ─── Success State ─── */
+    .form-success {
+      display: none;
+      text-align: center;
+      padding: 32px 0;
+    }
+
+    .success-icon {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: rgba(34,197,94,0.15);
+      border: 1px solid rgba(34,197,94,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      margin: 0 auto 24px;
+    }
+
+    .form-success h3 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 12px;
+    }
+
+    .form-success p {
+      font-size: 0.95rem;
+      color: var(--muted);
+      line-height: 1.6;
+      max-width: 380px;
+      margin: 0 auto 32px;
+    }
+
+    .btn-close-success {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 12px 28px;
+      border-radius: 50px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+
+    .btn-close-success:hover { border-color: var(--subtle); }
+
+    /* ─── Animations ─── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .fade-in-section {
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 0.65s ease, transform 0.65s ease;
+    }
+
+    .fade-in-section.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ─── Navigation ─── -->
+  <nav>
+    <div class="nav-logo">i<span>S</span>crpt</div>
+    <button class="nav-cta" onclick="openForm()">Join the Waitlist</button>
+  </nav>
+
+  <!-- ─── Hero ─── -->
+  <section id="hero">
+    <div class="glow-orb"></div>
+    <div class="glow-orb"></div>
+    <div style="position:relative; z-index:1; width:100%; display:flex; flex-direction:column; align-items:center;">
+      <div class="hero-badge">
+        <span class="dot"></span>
+        Now Accepting Waitlist Applications
+      </div>
+      <h1>
+        Automate the Work.<br />
+        <span class="gradient-text">Scale Your Business.</span>
+      </h1>
+      <p class="hero-sub">
+        iScrpt builds custom Apple Shortcuts and AI-powered automations for small businesses in Arizona — so you can spend less time on repetitive tasks and more time growing.
+      </p>
+      <div class="hero-actions">
+        <button class="btn-primary" onclick="openForm()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 5v14M5 12l7 7 7-7"/>
+          </svg>
+          Claim Your Spot
+        </button>
+        <span class="hero-note">Free to apply &nbsp;·&nbsp; No commitment required</span>
+      </div>
+    </div>
+    <div class="hero-scroll-indicator">
+      <span>Explore</span>
+      <div class="scroll-line"></div>
+    </div>
+  </section>
+
+  <!-- ─── Services ─── -->
+  <section id="services">
+    <div class="section-inner">
+      <div class="services-header fade-in-section">
+        <div class="section-label">What We Build</div>
+        <h2 class="section-title">Two tools. Infinite time saved.</h2>
+        <p class="section-sub">We specialize in two high-impact automation categories that work beautifully together for small business owners.</p>
+      </div>
+      <div class="services-grid">
+        <div class="service-card fade-in-section">
+          <div class="service-icon">⚡</div>
+          <h3>Apple Shortcuts</h3>
+          <p>Custom automation workflows built natively for iPhone, iPad, and Mac. Tap once and let your device do the work for you.</p>
+          <ul class="service-features">
+            <li>Client intake & follow-up flows</li>
+            <li>Invoice & estimate generation</li>
+            <li>Social media posting shortcuts</li>
+            <li>Daily business check-in routines</li>
+            <li>Automatic file & photo organization</li>
+            <li>One-tap reporting & summaries</li>
+          </ul>
+        </div>
+        <div class="service-card fade-in-section">
+          <div class="service-icon">🤖</div>
+          <h3>AI Automations</h3>
+          <p>Intelligent, end-to-end workflows that handle your most time-consuming back-office tasks — without you lifting a finger.</p>
+          <ul class="service-features">
+            <li>AI-drafted emails & responses</li>
+            <li>Lead qualification & routing</li>
+            <li>Appointment scheduling flows</li>
+            <li>Review request automation</li>
+            <li>CRM data entry & cleanup</li>
+            <li>Custom AI chatbots for your business</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── Who We Serve ─── -->
+  <section id="who">
+    <div class="section-inner">
+      <div class="who-layout">
+        <div class="fade-in-section">
+          <div class="az-badge">
+            📍 Proudly serving Arizona
+          </div>
+          <div class="section-label">Who We Serve</div>
+          <h2 class="section-title">Built for Arizona small business owners.</h2>
+          <p class="section-sub">Whether you're running a solo operation or a team of ten, if you're in Arizona and tired of doing the same tasks over and over — we built iScrpt for you.</p>
+          <div class="industry-pills">
+            <span class="pill">Contractors</span>
+            <span class="pill">Real Estate</span>
+            <span class="pill">Beauty & Salons</span>
+            <span class="pill">Restaurants</span>
+            <span class="pill">Law Offices</span>
+            <span class="pill">Landscaping</span>
+            <span class="pill">Retail</span>
+            <span class="pill">Healthcare</span>
+            <span class="pill">Consulting</span>
+            <span class="pill">& More</span>
+          </div>
+        </div>
+        <div class="stats-grid fade-in-section">
+          <div class="stat-card">
+            <div class="stat-number">10+</div>
+            <div class="stat-label">Hours saved per client every week</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">48h</div>
+            <div class="stat-label">Average turnaround for simple automations</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">100%</div>
+            <div class="stat-label">Custom-built for your exact workflow</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">AZ</div>
+            <div class="stat-label">Arizona-based &amp; locally focused</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── How It Works ─── -->
+  <section id="how">
+    <div class="section-inner">
+      <div class="how-header fade-in-section">
+        <div class="section-label">The Process</div>
+        <h2 class="section-title">Simple from day one.</h2>
+        <p class="section-sub">We handle everything. You just show up, tell us your pain points, and we build the solution.</p>
+      </div>
+      <div class="steps-grid">
+        <div class="step-card fade-in-section">
+          <div class="step-number">Step 01</div>
+          <div class="step-icon">📋</div>
+          <h4>Join the Waitlist</h4>
+          <p>Fill out the intake form below. Tell us about your business and your biggest time-drains.</p>
+        </div>
+        <div class="step-card fade-in-section">
+          <div class="step-number">Step 02</div>
+          <div class="step-icon">📞</div>
+          <h4>Discovery Call</h4>
+          <p>We'll reach out to schedule a short call to understand exactly what you need automated.</p>
+        </div>
+        <div class="step-card fade-in-section">
+          <div class="step-number">Step 03</div>
+          <div class="step-icon">🛠</div>
+          <h4>We Build It</h4>
+          <p>iScrpt designs and builds your custom automations — tailored specifically to your workflow.</p>
+        </div>
+        <div class="step-card fade-in-section">
+          <div class="step-number">Step 04</div>
+          <div class="step-icon">🚀</div>
+          <h4>Go Live</h4>
+          <p>We hand it off, walk you through everything, and you start saving hours immediately.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── CTA ─── -->
+  <section id="cta">
+    <div class="section-inner">
+      <div class="cta-box fade-in-section">
+        <div class="glow-orb"></div>
+        <div style="position:relative; z-index:1;">
+          <div class="section-label">Limited Spots Available</div>
+          <h2 class="section-title">Ready to get your time back?</h2>
+          <p class="section-sub">We're currently onboarding a select group of Arizona businesses. Join the waitlist today and be first in line.</p>
+          <br />
+          <button class="btn-primary" onclick="openForm()" style="display:inline-flex;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;">
+              <path d="M12 5v14M5 12l7 7 7-7"/>
+            </svg>
+            Join the Waitlist
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── Footer ─── -->
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-logo">iScrpt</div>
+      <div class="footer-tagline">Apple Shortcuts &amp; AI Automations for Arizona Small Businesses</div>
+      <div class="footer-location">📍 Arizona, USA</div>
+      <div class="footer-copy">© 2026 iScrpt. All rights reserved.</div>
+    </div>
+  </footer>
+
+  <!-- ─── Waitlist Form Overlay ─── -->
+  <div id="form-overlay" role="dialog" aria-modal="true" aria-label="Waitlist Application">
+    <div class="form-panel">
+      <button class="form-close" onclick="closeForm()" aria-label="Close">&times;</button>
+
+      <!-- Form Content -->
+      <div id="form-content">
+        <div class="section-label">Waitlist Application</div>
+        <h2>Let's get you set up.</h2>
+        <p class="form-intro">Fill out the form below and we'll be in touch to discuss how iScrpt can save your business hours every week.</p>
+
+        <form id="intake-form" onsubmit="handleSubmit(event)" novalidate>
+
+          <!-- Name -->
+          <div class="form-row">
+            <div class="form-group">
+              <label>First Name <span class="req">*</span></label>
+              <input type="text" name="first_name" placeholder="Jane" required />
+            </div>
+            <div class="form-group">
+              <label>Last Name <span class="req">*</span></label>
+              <input type="text" name="last_name" placeholder="Smith" required />
+            </div>
+          </div>
+
+          <!-- Business -->
+          <div class="form-group">
+            <label>Business Name <span class="req">*</span></label>
+            <input type="text" name="business_name" placeholder="Smith's Landscaping LLC" required />
+          </div>
+
+          <!-- Contact -->
+          <div class="form-row">
+            <div class="form-group">
+              <label>Email Address <span class="req">*</span></label>
+              <input type="email" name="email" placeholder="jane@mybusiness.com" required />
+            </div>
+            <div class="form-group">
+              <label>Phone Number</label>
+              <input type="tel" name="phone" placeholder="(602) 555-0100" />
+            </div>
+          </div>
+
+          <!-- Location & Industry -->
+          <div class="form-row">
+            <div class="form-group">
+              <label>City <span class="req">*</span></label>
+              <select name="city" required>
+                <option value="" disabled selected>Select your city</option>
+                <option>Phoenix</option>
+                <option>Scottsdale</option>
+                <option>Tempe</option>
+                <option>Mesa</option>
+                <option>Chandler</option>
+                <option>Gilbert</option>
+                <option>Glendale</option>
+                <option>Peoria</option>
+                <option>Surprise</option>
+                <option>Tucson</option>
+                <option>Flagstaff</option>
+                <option>Other Arizona city</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Industry <span class="req">*</span></label>
+              <select name="industry" required>
+                <option value="" disabled selected>Select your industry</option>
+                <option>Contracting / Trades</option>
+                <option>Real Estate</option>
+                <option>Beauty / Wellness / Salon</option>
+                <option>Restaurant / Food & Beverage</option>
+                <option>Law / Legal Services</option>
+                <option>Landscaping / Lawn Care</option>
+                <option>Retail / E-Commerce</option>
+                <option>Healthcare / Medical</option>
+                <option>Consulting / Coaching</option>
+                <option>Marketing / Creative</option>
+                <option>Cleaning Services</option>
+                <option>Transportation / Delivery</option>
+                <option>Other</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Team Size -->
+          <div class="form-group">
+            <label>Business Size</label>
+            <select name="team_size">
+              <option value="" disabled selected>How many people on your team?</option>
+              <option>Just me (solo)</option>
+              <option>2–5 people</option>
+              <option>6–15 people</option>
+              <option>16–30 people</option>
+              <option>30+ people</option>
+            </select>
+          </div>
+
+          <div class="form-divider"></div>
+
+          <!-- Services Interested In -->
+          <div class="checkbox-group">
+            <div class="group-label">Services You're Interested In <span style="color:var(--accent1)">*</span></div>
+            <label class="checkbox-item">
+              <input type="checkbox" name="services" value="apple_shortcuts" />
+              <span>⚡ Apple Shortcuts — automations on iPhone, iPad, Mac</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" name="services" value="ai_automations" />
+              <span>🤖 AI Automations — intelligent back-office workflows</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" name="services" value="both" />
+              <span>✨ Both — I want the full package</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" name="services" value="not_sure" />
+              <span>🤔 Not sure yet — I'd like a recommendation</span>
+            </label>
+          </div>
+
+          <!-- Pain Points -->
+          <div class="form-group">
+            <label>What tasks eat up most of your time? <span class="req">*</span></label>
+            <textarea name="pain_points" placeholder="e.g., Manually sending follow-up texts, copying info between apps, scheduling appointments, writing the same emails over and over..." required></textarea>
+          </div>
+
+          <!-- Timeline -->
+          <div class="form-group">
+            <label>How soon are you looking to get started?</label>
+            <select name="timeline">
+              <option value="" disabled selected>Select a timeline</option>
+              <option>ASAP — I needed this yesterday</option>
+              <option>Within the next month</option>
+              <option>Within 1–3 months</option>
+              <option>Just exploring for now</option>
+            </select>
+          </div>
+
+          <!-- Referral -->
+          <div class="form-group">
+            <label>How did you hear about iScrpt?</label>
+            <select name="referral">
+              <option value="" disabled selected>Select one</option>
+              <option>Word of mouth / referral</option>
+              <option>Instagram</option>
+              <option>Facebook</option>
+              <option>TikTok</option>
+              <option>Google search</option>
+              <option>LinkedIn</option>
+              <option>Other</option>
+            </select>
+          </div>
+
+          <button type="submit" class="btn-submit">Submit My Application →</button>
+          <p class="form-privacy">🔒 Your information is private and will never be sold or shared.</p>
+        </form>
+      </div>
+
+      <!-- Success State -->
+      <div class="form-success" id="form-success">
+        <div class="success-icon">✓</div>
+        <h3>You're on the list!</h3>
+        <p>Thanks for applying. We'll review your submission and reach out within 1–2 business days to schedule your discovery call.</p>
+        <button class="btn-close-success" onclick="closeForm()">Back to Site</button>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // ─── Form overlay ───
+    function openForm() {
+      const overlay = document.getElementById('form-overlay');
+      overlay.classList.add('open');
+      document.body.style.overflow = 'hidden';
+      overlay.scrollTop = 0;
+    }
+
+    function closeForm() {
+      const overlay = document.getElementById('form-overlay');
+      overlay.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    // Close on backdrop click
+    document.getElementById('form-overlay').addEventListener('click', function(e) {
+      if (e.target === this) closeForm();
+    });
+
+    // Close on Escape
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closeForm();
+    });
+
+    // ─── Form submission ───
+    function handleSubmit(e) {
+      e.preventDefault();
+      const form = e.target;
+
+      // Basic validation
+      const required = form.querySelectorAll('[required]');
+      let valid = true;
+      required.forEach(field => {
+        if (!field.value.trim()) {
+          valid = false;
+          field.style.borderColor = '#ef4444';
+          field.addEventListener('input', () => field.style.borderColor = '', { once: true });
+        }
+      });
+
+      const checkedServices = form.querySelectorAll('input[name="services"]:checked');
+      if (checkedServices.length === 0) {
+        valid = false;
+        const firstCheckbox = form.querySelector('input[name="services"]');
+        const groupLabel = firstCheckbox.closest('.checkbox-group');
+        groupLabel.style.outline = '1px solid #ef4444';
+        groupLabel.style.borderRadius = '8px';
+        groupLabel.style.padding = '8px';
+        setTimeout(() => {
+          groupLabel.style.outline = '';
+          groupLabel.style.padding = '';
+        }, 3000);
+      }
+
+      if (!valid) return;
+
+      // Collect data
+      const data = {};
+      new FormData(form).forEach((value, key) => {
+        if (data[key]) {
+          data[key] = [].concat(data[key], value);
+        } else {
+          data[key] = value;
+        }
+      });
+      data.services = Array.from(checkedServices).map(cb => cb.value);
+      data.submitted_at = new Date().toISOString();
+
+      console.log('iScrpt Waitlist Submission:', data);
+
+      // Show success
+      document.getElementById('form-content').style.display = 'none';
+      document.getElementById('form-success').style.display = 'block';
+      document.querySelector('.form-panel').scrollTop = 0;
+    }
+  </script>
+
+  <!-- Scroll animation observer -->
+  <script>
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.12 });
+
+    document.querySelectorAll('.fade-in-section').forEach(el => observer.observe(el));
+  </script>
+
+</body>
+</html>
